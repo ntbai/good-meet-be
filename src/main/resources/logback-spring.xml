@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+
+<configuration scan="true">
+
+    <property name="LOG_CORRELATION_PATTERN"
+              value="[correlationId=%X{correlationId:-}] "/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <!-- ============================
+         🎯 Ghi log ra console
+         ============================ -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ============================
+         📂 Ghi log ra file (app.log) với giới hạn kích thước
+         ============================ -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ============================
+         ⚠️ Ghi riêng log lỗi vào errors.log
+         ============================ -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/errors.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/errors-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- ============================
+         🛠️ Ghi riêng log Database vào db.log
+         ============================ -->
+    <appender name="DB_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/db.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/db-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>50MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ============================
+         ⚡ Ghi log bất đồng bộ để tăng hiệu suất
+         ============================ -->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <appender name="ASYNC_DB" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="DB_FILE"/>
+    </appender>
+
+    <!-- ============================
+         🛠️ Cấu hình logging cho JDBC (Debug Database)
+         ============================ -->
+    <logger name="jdbc" level="TRACE"/>
+    <logger name="jdbc.sqlonly" level="TRACE"/>
+    <logger name="jdbc.sqltiming" level="TRACE" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC"/>
+        <appender-ref ref="ASYNC_DB"/>
+    </logger>
+    <logger name="jdbc.resultsettable" level="TRACE" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC"/>
+        <appender-ref ref="ASYNC_DB"/>
+    </logger>
+
+    <!-- ============================
+         🔥 Root Logger (Mức log mặc định)
+         ============================ -->
+    <root>
+        <appender-ref ref="ASYNC"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+    <!-- ============================
+         🛑 Đảm bảo ghi hết log trước khi shutdown
+         ============================ -->
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
+
+    <!-- ============================
+         🔄 Đồng bộ mức log giữa Logback và Java Util Logging (JUL)
+         ============================ -->
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
+</configuration>

@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: good-meet
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      connection-init-sql: SET TIME ZONE 'UTC'
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+  modulith:
+    detection-strategy: explicitly-annotated
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+  health:
+    redis:
+      enabled: false
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+application:
+  cors:
+    allowed-origins: http://localhost:3000
+  identity:
+    tokens:
+      issuer: good-meet-backend
+      audience: good-meet-api
+      access-token-ttl: 15m
+      secret: integration-platform-secret-not-for-production
+  participant:
+    guest-token:
+      issuer: good-meet-backend
+      audience: good-meet-guest
+      token-ttl: 30m
+      secret: integration-guest-secret-not-for-production-now
+  livekit:
+    url: wss://livekit.integration.test.invalid
+    api-key: integration-test-key
+    api-secret: integration-livekit-secret-not-for-production-now
+    token-ttl: 5m
+    room-prefix: goodmeet-
+
+logging:
+  level:
+    root: info
+    org.hibernate.SQL: warn
+    org.hibernate.orm.jdbc.bind: warn
